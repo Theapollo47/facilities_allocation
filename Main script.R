@@ -7,6 +7,7 @@ invisible(
 )
 
 
+
 #load raster and shapefiles
 ras_pop <- terra::rast("raster\\mubi.tif")
 mubi_wards <-sf:: st_read ("nigeria_health_facilities\\Wards_mubi.shp")
@@ -14,16 +15,17 @@ health_f <- sf::st_read ("nigeria_health_facilities\\Nigeria_-_Health_Care_Facil
 adamawa_dem <-terra::rast("raster\\n10_e013_1arc_v3.tif")
 mubi_lc <- terra::rast("raster\\landcover_mubi.tif")
 mubi_rds <- sf::st_read('nigeria_health_facilities\\roads.shp')
+mubi_ecd <- terra::rast('raster\\mubi_ecd.tif')
 
 mubi_wards <- mubi_wards[mubi_wards$wrd_nm_x !='Uba',] #removing an unwanted row
 
 #set uniform coordinate reference system for all datasets
-mubi_wards <- sf::st_transform(mubi_wards,crs = st_crs(mubi_ecd))
-health_f <- sf::st_transform(health_f,crs = st_crs(mubi_ecd))
+mubi_wards <- sf::st_transform(mubi_wards,crs = 32633)
+health_f <- sf::st_transform(health_f,crs = 32633)
 adamawa_dem <- terra::project(adamawa_dem,mubi_ecd)
 ras_pop <- terra::project(ras_pop,mubi_ecd)
 mubi_lc <- terra::project(mubi_lc,mubi_ecd)
-mubi_rds <- sf::st_transform(mubi_rds,crs=st_crs(mubi_ecd))
+mubi_rds <- sf::st_transform(mubi_rds,crs=32633)
 
 # Extract zonal statistics to get population sum for each ward and add as a  new column to mubi_wards
 zonal_stats <- terra::zonal( 
@@ -39,8 +41,7 @@ mubi_wards$pop <- round(zonal_stats$mubi) #substitue columns
 mubi_wards$area_sqkm <- st_area(mubi_wards)/1e6
 mubi_wards$pop_dens <- round(mubi_wards$pop/mubi_wards$area_sqkm)
 
-#convert $pop_dens to a numeric variable
-mubi_wards$pop_dens <- as.numeric(mubi_wards$pop_dens)
+mubi_wards$pop_dens <- as.numeric(mubi_wards$pop_dens) #convert $pop_dens to a numeric variable
 
 
 #get a subset of health facilites in mubi wards 
