@@ -20,12 +20,12 @@ mubi_ecd <- terra::rast('raster\\mubi_ecd.tif')
 mubi_wards <- mubi_wards[mubi_wards$wrd_nm_x !='Uba',] #removing an unwanted row
 
 #set uniform coordinate reference system for all datasets
-mubi_wards <- sf::st_transform(mubi_wards,crs = 32633)
-health_f <- sf::st_transform(health_f,crs = 32633)
+mubi_wards <- sf::st_transform(mubi_wards,crs = st_crs(mubi_ecd))
+health_f <- sf::st_transform(health_f,crs = st_crs(mubi_ecd))
 adamawa_dem <- terra::project(adamawa_dem,mubi_ecd)
 ras_pop <- terra::project(ras_pop,mubi_ecd)
 mubi_lc <- terra::project(mubi_lc,mubi_ecd)
-mubi_rds <- sf::st_transform(mubi_rds,crs=32633)
+mubi_rds <- sf::st_transform(mubi_rds,crs=st_crs(mubi_ecd))
 
 # Extract zonal statistics to get population sum for each ward and add as a  new column to mubi_wards
 zonal_stats <- terra::zonal( 
@@ -54,7 +54,7 @@ mubi_health <- sf::st_join(
 mubi_health <- st_intersection(health_f,mubi_wards)
 
 
-#Rasterize Population _density
+#Rasterize Population data
 extent <- extent(mubi_wards)
 resolution <- c(30, 30)  
 attribute <- "pop"
@@ -67,28 +67,28 @@ mubi_wards_rasterized <- rasterize(mubi_wards,template_raster, field = attribute
 plot(mubi_wards_rasterized)
 
 #Reclassify mubi_wards_rasterized
-pop_dens_breaks <- c(0,10000,2,10000,20000,4,20000,30000,6,30000,40000,8,40000,Inf,10)
-pop_dens_matrix <- matrix(pop_dens_breaks,ncol = 3, byrow = TRUE)
+pop_breaks <- c(0,10000,2,10000,20000,4,20000,30000,6,30000,40000,8,40000,Inf,10)
+pop_matrix <- matrix(pop_breaks,ncol = 3, byrow = TRUE)
 
-mubi_pop_reclassified <- classify(mubi_wards_rasterized,pop_dens_matrix) 
+mubi_pop_reclassified <- terra::classify(mubi_wards_rasterized,pop_matrix) 
 
 plot(mubi_pop_reclassified) #for unknown reasons this is'nt classifying as specified , I mean it was perfect just last night!
 
 #Calculate the distance from exixting health facilities
-mubi_ecd <- terra::distance(template_raster,vect(mubi_health))
+mubi_ecd_health <- terra::distance(template_raster,vect(mubi_health))
 
 #Reclassify the Euclidean distances between health facilities to unitless values
 reclasv <- c(0,2500,0,2500,3500,4,3500,5500,10,5500,7500,8,7500,9500,8,9500,11500,4,11500,Inf,0) #create a classification matrix
 mat <- matrix(reclasv,ncol = 3, byrow = TRUE) 
 
-mubi_ecd_relass <- terra::classify(mubi_ecd,mat) # reclassify values using the matrix object
+mubi_ecd_relass <- terra::classify(mubi_ecd_health,mat) # reclassify values using the matrix object
 
 plot(mubi_ecd_relass)
 
 
 #Reclassify euclidean distances for roads
 rds_ecd <- terra::distance(template_raster,vect(mubi_rds))
-
+crs(template_raster)
 rds_breaks <- c(0,5000, 10,5000,10000,8,10000,15000,6,15000,20000,4,20000,25000,2,25000,Inf,0) 
 rd_break_matrix <- matrix(rds_breaks,ncol = 3,byrow = TRUE)
 rds_ecd_reclassified <- classify(rds_ecd,rd_break_matrix) 
