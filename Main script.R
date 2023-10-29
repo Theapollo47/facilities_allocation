@@ -7,7 +7,6 @@ invisible(
 )
 
 
-
 #load raster and shapefiles
 ras_pop <- terra::rast("raster\\mubi.tif")
 mubi_wards <-sf:: st_read ("nigeria_health_facilities\\Wards_mubi.shp")
@@ -35,7 +34,7 @@ zonal_stats <- terra::zonal(
   na.rm = T # you should also ignore NAs
 )
 
-mubi_wards$pop <- round(zonal_stats$mubi) #substitue columns
+mubi_wards$pop <- round(zonal_stats$mubi) #Add zonal_stats column to mubi_wards
 
 #calculate area and population density of mubi_wards
 mubi_wards$area_sqkm <- st_area(mubi_wards)/1e6
@@ -54,10 +53,10 @@ mubi_health <- sf::st_join(
 mubi_health <- st_intersection(health_f,mubi_wards)
 
 
-#Rasterize Population data
+#Rasterize Population density data
 extent <- extent(mubi_wards)
 resolution <- c(30, 30)  
-attribute <- "pop"
+attribute <- "pop_dens"
 
 template_raster <- rast(mubi_wards, res = resolution) # Create a raster template
 
@@ -72,7 +71,7 @@ pop_matrix <- matrix(pop_breaks,ncol = 3, byrow = TRUE)
 
 mubi_pop_reclassified <- terra::classify(mubi_wards_rasterized,pop_matrix) 
 
-plot(mubi_pop_reclassified) #for unknown reasons this is'nt classifying as specified 
+plot(mubi_pop_reclassified)
 
 #Calculate the distance from exixting health facilities
 mubi_ecd_health <- terra::distance(template_raster,vect(mubi_health))
@@ -88,12 +87,13 @@ plot(mubi_ecd_relass)
 
 #Reclassify euclidean distances for roads
 rds_ecd <- terra::distance(template_raster,vect(mubi_rds))
-crs(template_raster)
+
 rds_breaks <- c(0,5000, 10,5000,10000,8,10000,15000,6,15000,20000,4,20000,25000,2,25000,Inf,0) 
 rd_break_matrix <- matrix(rds_breaks,ncol = 3,byrow = TRUE)
-rds_ecd_reclassified <- classify(rds_ecd,rd_break_matrix) 
 
+rds_ecd_reclassified <- terra::classify(rds_ecd,rd_break_matrix) 
 
+plot(rds_ecd_reclassified)
 #crop adamawa_dem with mubi_wards sf
 mubi_dem <- terra::crop(adamawa_dem,mubi_wards)
 
@@ -115,8 +115,9 @@ matrix_lc <- matrix(breaks_lc,ncol = 3, byrow = TRUE)
 
 lc_reclassified <- classify(mubi_lc, matrix_lc)
 plot(lc_reclassified)
+
 #Resample unaligned raster for  uniform extents and resolution
-rds_ecd_reclassified <- resample(rds_ecd_reclassified,Mubi_slope_reclassified)
+Mubi_slope_reclassified <- resample(Mubi_slope_reclassified,rds_ecd_reclassified)
 mubi_pop_reclassified <- resample(mubi_pop_reclassified,Mubi_slope_reclassified)
 
 #Carry out raster calculation with figures representing weights (priority)
