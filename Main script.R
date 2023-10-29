@@ -1,11 +1,15 @@
 libs <- c('viridis', 'sf','stars','tidyverse',
-          'ggthemes','rvest','ggrepel',
-          'plotly','raster','terra','ggplot2')
+          'ggthemes','raster','terra','ggplot2')
 
 invisible(
   lapply(libs,library,character.only = T)
 )
 
+installed_libs <- libs %in% rownames (installed.packages())
+  
+  if(any(installed_libs == F)) {
+    install.packages(libs[!installed_libs])
+  }
 
 #load raster and shapefiles
 ras_pop <- terra::rast("raster\\mubi.tif")
