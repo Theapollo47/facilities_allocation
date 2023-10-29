@@ -72,7 +72,7 @@ pop_matrix <- matrix(pop_breaks,ncol = 3, byrow = TRUE)
 
 mubi_pop_reclassified <- terra::classify(mubi_wards_rasterized,pop_matrix) 
 
-plot(mubi_pop_reclassified) #for unknown reasons this is'nt classifying as specified , I mean it was perfect just last night!
+plot(mubi_pop_reclassified) #for unknown reasons this is'nt classifying as specified 
 
 #Calculate the distance from exixting health facilities
 mubi_ecd_health <- terra::distance(template_raster,vect(mubi_health))
