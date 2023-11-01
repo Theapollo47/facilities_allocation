@@ -1,15 +1,16 @@
 libs <- c('viridis', 'sf','stars','tidyverse',
-          'ggthemes','raster','terra','ggplot2')
+          'ggthemes','raster','terra','ggplot2','osmdata','httr')
 
-invisible(
-  lapply(libs,library,character.only = T)
-)
 
 installed_libs <- libs %in% rownames (installed.packages())
   
   if(any(installed_libs == F)) {
     install.packages(libs[!installed_libs])
   }
+
+invisible(
+  lapply(libs,library,character.only = T)
+)
 
 #load raster and shapefiles
 ras_pop <- terra::rast("raster\\mubi.tif")
@@ -89,15 +90,48 @@ mubi_ecd_relass <- terra::classify(mubi_ecd_health,mat) # reclassify values usin
 plot(mubi_ecd_relass)
 
 
-#Reclassify euclidean distances for roads
-rds_ecd <- terra::distance(template_raster,vect(mubi_rds))
+#Calculate euclidean distances for roads
+mubi <- st_union(mubi_wards) #merge all mubi wards to have a single geometry
 
-rds_breaks <- c(0,5000, 10,5000,10000,8,10000,15000,6,15000,20000,4,20000,25000,2,25000,Inf,0) 
+mubi<- st_transform(mubi, crs=4326) # transform to WGS84  for compatibilty with OSM
+
+
+road_tags <- c(
+  "motorway", "trunk", "primary", "secondary",
+  "tertiary", "motorway_link", "trunk_link", 
+  "primary_link", "secondary_link", "tertiary_link"
+)
+
+get_osm_roads <- function() {
+  bbox <- sf::st_bbox(mubi)
+  roads <- bbox |>
+    opq() |>
+    add_osm_feature(
+      key = "highway",
+      value = road_tags
+    ) |>
+    osmdata::osmdata_sf()
+  
+  return(roads)
+} #create a function to extract roads from Mubi
+
+roads <- get_osm_roads() #Assign to a new object
+
+mubi_roads <- roads$osm_lines |>
+  sf::st_set_crs(4326) |>
+  sf::st_transform(crs = st_crs(4326)) #Assign CRS
+
+mubi_roads <- st_transform(mubi_roads,crs=st_crs(mubi_ecd)) #transform CRS to uniform CRS for the project
+
+rds_ecd <- terra::distance(template_raster,vect(mubi_roads)) #Calculate distance from Lines
+
+#Reclassify rds_ecd raster
+rds_breaks <- c(0,2000, 10,2000,4000,8,4000,8000,6,8000,10000,4,10000,12000,2,12000,Inf,0) 
 rd_break_matrix <- matrix(rds_breaks,ncol = 3,byrow = TRUE)
 
 rds_ecd_reclassified <- terra::classify(rds_ecd,rd_break_matrix) 
 
-plot(rds_ecd_reclassified)
+
 #crop adamawa_dem with mubi_wards sf
 mubi_dem <- terra::crop(adamawa_dem,mubi_wards)
 
@@ -122,15 +156,82 @@ plot(lc_reclassified)
 
 #Resample unaligned raster for  uniform extents and resolution
 Mubi_slope_reclassified <- resample(Mubi_slope_reclassified,rds_ecd_reclassified)
-mubi_pop_reclassified <- resample(mubi_pop_reclassified,Mubi_slope_reclassified)
+
 
 #Carry out raster calculation with figures representing weights (priority)
 suitable_location <- mubi_pop_reclassified * 0.27 + lc_reclassified * 0.17 + rds_ecd_reclassified *0.19 +
   Mubi_slope_reclassified * 0.17 +  mubi_ecd_relass * 0.22
 
-Suitable_location_df <- terra::as.data.frame(suitable_location,xy=T)
+suitable_location_breaks <- c(0,4,0,4,6,1,6,Inf,2)
+
+sl_matrix <-  matrix(suitable_location_breaks,ncol=3, byrow=TRUE)
+
+suitable_location_reclassified <- classify(suitable_location,sl_matrix)
+plot(suitable_location_reclassified)
+
+Suitable_location_df <- terra::as.data.frame(suitable_location_reclassified,xy=T)
 
 names(Suitable_location_df)[3] <- "value"
 
+# define categorical values
+Suitable_location_df$category <- round(Suitable_location_df$value, 0)
+Suitable_location_df$category <- factor(Suitable_location_df$category,
+                       labels = c("Poor", "Adequate", "Ideal")
+)
+
+#Crop road to be used for map, The roads need to fall within the mubi boundary
+mubi_roads_cropped <- st_intersection(mubi_roads,mubi_wards)
+
+#Map
+colrs <- c(
+  "grey20", "#FCDD0F", "#287DFC"
+)
+
+
 m<- ggplot() +
-  geom_raster(data=Suitable_location_df, aes(x=x,y=y, fill = value))
+  geom_raster(data=Suitable_location_df, aes(x=x,y=y, fill = category), alpha=1) +
+  
+  geom_sf(
+    data = mubi_roads_cropped,
+    color = "grey20",
+    size = .1,
+    alpha = 1,
+    fill = "transparent"
+  ) +
+  
+  scale_fill_manual(
+    name = "",
+    values = colrs,
+    drop = F
+  ) +
+  
+  theme_minimal() +
+  
+  theme(
+    axis.line = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    legend.position = c(.5, 1.05),
+    legend.text = element_text(size = 12, color = "white"),
+    legend.title = element_text(size = 14, color = "white"),
+    legend.spacing.y = unit(0.25, "cm"),
+    panel.grid.major = element_line(color = "grey20", size = 0.2),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(
+      size = 20, color = "grey80", hjust = .5, vjust = 2
+    ),
+    plot.caption = element_text(
+      size = 9, color = "grey90", hjust = .5, vjust = 5
+    ),
+    plot.margin = unit(
+      c(t = 1, r = 0, b = 0, l = 0), "lines"
+    ),
+    plot.background = element_rect(fill = "grey20", color = NA),
+    panel.background = element_rect(fill = "grey20", color = NA),
+    legend.background = element_rect(fill = "grey20", color = NA),
+    legend.key = element_rect(colour = "white"),
+    panel.border = element_blank()
+  )
