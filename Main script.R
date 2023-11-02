@@ -220,13 +220,13 @@ m<- ggplot() +
     axis.title.y = element_blank(),
     legend.key.height = unit(0.1, 'mm'),
     legend.position = 'top',
-    legend.text = element_text(size = 7, color = "#009e73"),
-    legend.title = element_text(size = 7, color = "#009e73"),
+    legend.text = element_text(size = 35, color = "#009e73"),
+    legend.title = element_text(size = 35, color = "#009e73"),
     plot.title = element_text(
-      size = 15, color = "#009e73", hjust = .5, vjust = -3
+      size = 60, color = "#009e73", hjust = .5, vjust = -3
     ),
     plot.caption = element_text(
-      size = 7, color = "#009e73", hjust = .5, vjust = 5
+      size = 30, color = "#009e73", hjust = .5, vjust = 5
     ),
     legend.spacing.y = unit(0.25, "cm"),
     panel.grid.major = element_blank(),
@@ -243,5 +243,11 @@ m<- ggplot() +
     caption = "©2023 Victor James (https://github.com/Theapollo47)|Data: GRID3, USGS & ©OpenStreetMap contributors"
   )
 
-m  
+
+
+ggsave('Suitability Analysis.png',
+        width = 6,
+        height = 6,
+        dpi = 600,
+        device = 'png')
    
