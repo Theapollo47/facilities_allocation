@@ -1,5 +1,5 @@
 libs <- c('viridis', 'sf','stars','tidyverse',
-          'ggthemes','raster','terra','ggplot2','osmdata','httr')
+          'ggthemes','raster','terra','ggplot2','osmdata','httr','showtext')
 
 
 installed_libs <- libs %in% rownames (installed.packages())
@@ -12,7 +12,8 @@ invisible(
   lapply(libs,library,character.only = T)
 )
 
-#load raster and shapefiles
+
+ #load raster and shapefiles
 ras_pop <- terra::rast("raster\\mubi.tif")
 mubi_wards <-sf:: st_read ("nigeria_health_facilities\\Wards_mubi.shp")
 health_f <- sf::st_read ("nigeria_health_facilities\\Nigeria_-_Health_Care_Facilities_.shp") 
@@ -182,9 +183,12 @@ Suitable_location_df$category <- factor(Suitable_location_df$category,
 #Crop road to be used for map, The roads need to fall within the mubi boundary
 mubi_roads_cropped <- st_intersection(mubi_roads,mubi_wards)
 
+font_add(family = 'century gothic', regular = 'gothic.ttf')
+showtext_auto()
+
 #Map
 colrs <- c(
-  "grey20", "#FCDD0F", "#287DFC"
+  "grey20", "#FCDD0F", "#009e73"
 )
 
 
@@ -206,32 +210,38 @@ m<- ggplot() +
   ) +
   
   theme_minimal() +
-  
-  theme(
+  theme(text = element_text(family = 'century gothic'),
+        legend.direction = "horizontal",
     axis.line = element_blank(),
     axis.text.x = element_blank(),
     axis.text.y = element_blank(),
     axis.ticks = element_blank(),
     axis.title.x = element_blank(),
     axis.title.y = element_blank(),
-    legend.position = c(.5, 1.05),
-    legend.text = element_text(size = 12, color = "white"),
-    legend.title = element_text(size = 14, color = "white"),
-    legend.spacing.y = unit(0.25, "cm"),
-    panel.grid.major = element_line(color = "grey20", size = 0.2),
-    panel.grid.minor = element_blank(),
+    legend.key.height = unit(0.1, 'mm'),
+    legend.position = 'top',
+    legend.text = element_text(size = 7, color = "#009e73"),
+    legend.title = element_text(size = 7, color = "#009e73"),
     plot.title = element_text(
-      size = 20, color = "grey80", hjust = .5, vjust = 2
+      size = 15, color = "#009e73", hjust = .5, vjust = -3
     ),
     plot.caption = element_text(
-      size = 9, color = "grey90", hjust = .5, vjust = 5
+      size = 7, color = "#009e73", hjust = .5, vjust = 5
     ),
-    plot.margin = unit(
-      c(t = 1, r = 0, b = 0, l = 0), "lines"
-    ),
-    plot.background = element_rect(fill = "grey20", color = NA),
-    panel.background = element_rect(fill = "grey20", color = NA),
-    legend.background = element_rect(fill = "grey20", color = NA),
-    legend.key = element_rect(colour = "white"),
-    panel.border = element_blank()
+    legend.spacing.y = unit(0.25, "cm"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#ecfefa", color = NA),
+    panel.background = element_rect(fill = "#ecfefa", color = NA),
+    legend.background = element_rect(fill = "#ecfefa", color = NA)
+    ) +
+  labs(
+    x = "",
+    y = NULL,
+    title = "Where Do We Build Our New Clinic?",
+    subtitle = "",
+    caption = "©2023 Victor James (https://github.com/Theapollo47)|Data: GRID3, USGS & ©OpenStreetMap contributors"
   )
+
+m  
+   
