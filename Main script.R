@@ -170,12 +170,12 @@ sl_matrix <-  matrix(suitable_location_breaks,ncol=3, byrow=TRUE)
 suitable_location_reclassified <- classify(suitable_location,sl_matrix)
 plot(suitable_location_reclassified)
 
-Suitable_location_df <- terra::as.data.frame(suitable_location_reclassified,xy=T)
+Suitable_location_df <- terra::as.data.frame(suitable_location,xy=T)
 
 names(Suitable_location_df)[3] <- "value"
 
 # define categorical values
-Suitable_location_df$category <- round(Suitable_location_df$value, 0)
+Suitable_location_df$category <- round(Suitable_location_df$value, 0) *10
 Suitable_location_df$category <- factor(Suitable_location_df$category,
                        labels = c("Poor", "Adequate", "Ideal")
 )
@@ -203,38 +203,49 @@ m<- ggplot() +
     fill = "transparent"
   ) +
   
-  scale_fill_manual(
-    name = "",
-    values = colrs,
-    drop = F
-  ) +
+  scale_fill_gradientn(
+    name = "% of Site Suitabilty",
+    colours = rev(viridis(6)),
+    limits = c(0, 100) ) +
   
+  guides(
+    fill = guide_legend(
+      direction = "horizontal",
+      keywidth = unit(10, "mm"),
+      keyheight = unit(2.5, "mm"),
+      title.position = "top",
+      label.position = "bottom",
+      title.hjust = .5,
+      label.hjust = .5,
+      nrow = 1,
+      byrow = T)
+       ) +
   theme_minimal() +
   theme(text = element_text(family = 'century gothic'),
         legend.direction = "horizontal",
-    axis.line = element_blank(),
-    axis.text.x = element_blank(),
-    axis.text.y = element_blank(),
-    axis.ticks = element_blank(),
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank(),
-    legend.key.height = unit(0.1, 'mm'),
-    legend.position = 'top',
-    legend.text = element_text(size = 35, color = "#009e73"),
-    legend.title = element_text(size = 35, color = "#009e73"),
-    plot.title = element_text(
-      size = 60, color = "#009e73", hjust = .5, vjust = -3
-    ),
-    plot.caption = element_text(
-      size = 30, color = "#009e73", hjust = .5, vjust = 5
-    ),
-    legend.spacing.y = unit(0.25, "cm"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    plot.background = element_rect(fill = "#ecfefa", color = NA),
-    panel.background = element_rect(fill = "#ecfefa", color = NA),
-    legend.background = element_rect(fill = "#ecfefa", color = NA)
-    ) +
+        axis.line = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.key.height = unit(0.1, 'mm'),
+        legend.position = 'top',
+        legend.text = element_text(size = 35, color = "#009e73"),
+        legend.title = element_text(size = 35, color = "#009e73"),
+        plot.title = element_text(
+          size = 60, color = "#009e73", hjust = .5, vjust = -3
+        ),
+        plot.caption = element_text(
+          size = 30, color = "#009e73", hjust = .5, vjust = 5
+        ),
+        legend.spacing.y = unit(0.25, "cm"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.background = element_rect(fill = "#ecfefa", color = NA),
+        panel.background = element_rect(fill = "#ecfefa", color = NA),
+        legend.background = element_rect(fill = "#ecfefa", color = NA)
+  ) +
   labs(
     x = "",
     y = NULL,
@@ -243,9 +254,10 @@ m<- ggplot() +
     caption = "©2023 Victor James (https://github.com/Theapollo47)|Data: GRID3, USGS & ©OpenStreetMap contributors"
   )
 
+m 
 
 
-ggsave('Suitability Analysis.png',
+ggsave('Suitability Analysis_2.png',
         width = 6,
         height = 6,
         dpi = 600,
