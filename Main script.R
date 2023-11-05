@@ -155,7 +155,7 @@ matrix_lc <- matrix(breaks_lc,ncol = 3, byrow = TRUE)
 lc_reclassified <- classify(mubi_lc, matrix_lc)
 plot(lc_reclassified)
 
-#Resample unaligned raster for  uniform extents and resolution
+#Resample unaligned raster foruniform extents and resolution
 Mubi_slope_reclassified <- resample(Mubi_slope_reclassified,rds_ecd_reclassified)
 
 
@@ -170,27 +170,22 @@ sl_matrix <-  matrix(suitable_location_breaks,ncol=3, byrow=TRUE)
 suitable_location_reclassified <- classify(suitable_location,sl_matrix)
 plot(suitable_location_reclassified)
 
-Suitable_location_df <- terra::as.data.frame(suitable_location,xy=T)
+Suitable_location_df <- terra::as.data.frame(suitable_location,xy=T) #convert to data frame for use in ggplot
 
-names(Suitable_location_df)[3] <- "value"
+names(Suitable_location_df)[3] <- "value" #rename column
 
 # define categorical values
 Suitable_location_df$category <- round(Suitable_location_df$value, 0) *10
-Suitable_location_df$category <- factor(Suitable_location_df$category,
-                       labels = c("Poor", "Adequate", "Ideal")
-)
+
 
 #Crop road to be used for map, The roads need to fall within the mubi boundary
 mubi_roads_cropped <- st_intersection(mubi_roads,mubi_wards)
 
-font_add(family = 'century gothic', regular = 'gothic.ttf')
+font_add(family = 'century gothic', regular = 'gothic.ttf') #Add font to be used on Map
 showtext_auto()
 
-#Map
-colrs <- c(
-  "grey20", "#FCDD0F", "#009e73"
-)
 
+#Map
 
 m<- ggplot() +
   geom_raster(data=Suitable_location_df, aes(x=x,y=y, fill = category), alpha=1) +
@@ -220,7 +215,9 @@ m<- ggplot() +
       nrow = 1,
       byrow = T)
        ) +
+  
   theme_minimal() +
+  
   theme(text = element_text(family = 'century gothic'),
         legend.direction = "horizontal",
         axis.line = element_blank(),
@@ -249,9 +246,9 @@ m<- ggplot() +
   labs(
     x = "",
     y = NULL,
-    title = "Where Do We Build Our New Clinic?",
+    title = "Where in Mubi Do We Build Our New Clinic?",
     subtitle = "",
-    caption = "©2023 Victor James (https://github.com/Theapollo47)|Data: GRID3, USGS & ©OpenStreetMap contributors"
+    caption = "©2023 Victor James (https://github.com/Theapollo47)|Data & Contributions: GRID3, USGS & ©OpenStreetMap contributors, @milos_agathon"
   )
 
 m 
