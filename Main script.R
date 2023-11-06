@@ -53,11 +53,6 @@ mubi_wards$pop_dens <- as.numeric(mubi_wards$pop_dens) #convert $pop_dens to a n
 
 
 #get a subset of health facilites in mubi wards 
-mubi_health <- sf::st_join( 
-  health_f,
-  mubi_wards,
-  sf::st_within #function did not creat a subset for just mubi_wards and so I used the next line of code
-)
 
 mubi_health <- st_intersection(health_f,mubi_wards)
 
@@ -69,7 +64,7 @@ attribute <- "pop_dens"
 
 template_raster <- rast(mubi_wards, res = resolution) # Create a raster template
 
-template_raster <- project(template_raster,mubi_ecd) #transform template raster to a uniform CRS
+template_raster <- project(template_raster,utm33n_proj4) #transform template raster to a uniform CRS
 
 mubi_wards_rasterized <- rasterize(mubi_wards,template_raster, field = attribute) #rasterize
 plot(mubi_wards_rasterized)
@@ -125,7 +120,7 @@ mubi_roads <- roads$osm_lines |>
   sf::st_set_crs(4326) |>
   sf::st_transform(crs = st_crs(4326)) #Assign CRS
 
-mubi_roads <- st_transform(mubi_roads,crs=st_crs(mubi_ecd)) #transform CRS to uniform CRS for the project
+mubi_roads <- st_transform(mubi_roads,crs=32633) #transform CRS to uniform CRS for the project
 
 rds_ecd <- terra::distance(template_raster,vect(mubi_roads)) #Calculate distance from Lines
 
