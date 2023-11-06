@@ -14,23 +14,26 @@ invisible(
 
 
  #load raster and shapefiles
-ras_pop <- terra::rast("raster\\mubi.tif")
+ras_pop <- terra::rast("raster\\mubi.tif") #select path as it relates to your device
 mubi_wards <-sf:: st_read ("nigeria_health_facilities\\Wards_mubi.shp")
 health_f <- sf::st_read ("nigeria_health_facilities\\Nigeria_-_Health_Care_Facilities_.shp") 
 adamawa_dem <-terra::rast("raster\\n10_e013_1arc_v3.tif")
 mubi_lc <- terra::rast("raster\\landcover_mubi.tif")
 mubi_rds <- sf::st_read('nigeria_health_facilities\\roads.shp')
-mubi_ecd <- terra::rast('raster\\mubi_ecd.tif')
 
 mubi_wards <- mubi_wards[mubi_wards$wrd_nm_x !='Uba',] #removing an unwanted row
 
 #set uniform coordinate reference system for all datasets
-mubi_wards <- sf::st_transform(mubi_wards,crs = st_crs(mubi_ecd))
-health_f <- sf::st_transform(health_f,crs = st_crs(mubi_ecd))
-adamawa_dem <- terra::project(adamawa_dem,mubi_ecd)
-ras_pop <- terra::project(ras_pop,mubi_ecd)
-mubi_lc <- terra::project(mubi_lc,mubi_ecd)
-mubi_rds <- sf::st_transform(mubi_rds,crs=st_crs(mubi_ecd))
+utm33n_proj4 <- "+proj=utm +zone=33 +datum=WGS84 +units=m +no_defs" 
+
+
+
+mubi_wards <- sf::st_transform(mubi_wards,crs = 32633)
+health_f <- sf::st_transform(health_f,crs = 32633)
+adamawa_dem <- terra::project(adamawa_dem,utm33n_proj4)
+ras_pop <- terra::project(ras_pop,utm33n_proj4)
+mubi_lc <- terra::project(mubi_lc,utm33n_proj4)
+mubi_rds <- sf::st_transform(mubi_rds,crs=32633)
 
 # Extract zonal statistics to get population sum for each ward and add as a  new column to mubi_wards
 zonal_stats <- terra::zonal( 
@@ -199,7 +202,7 @@ m<- ggplot() +
   ) +
   
   scale_fill_gradientn(
-    name = "% of Site Suitabilty",
+    name = "Scale of Suitabilty",
     colours = rev(viridis(6)),
     limits = c(0, 100) ) +
   
@@ -248,7 +251,7 @@ m<- ggplot() +
     y = NULL,
     title = "Where in Mubi Do We Build Our New Clinic?",
     subtitle = "",
-    caption = "©2023 Victor James (https://github.com/Theapollo47)|Data & Contributions: GRID3, USGS & ©OpenStreetMap contributors, @milos_agathon"
+    caption = "©2023 Victor James (https://spatialnode.net/jamesa47)|Data & Contributions: GRID3, USGS & ©OpenStreetMap contributors, @milos_agathon"
   )
 
 m 
