@@ -27,7 +27,6 @@ mubi_wards <- mubi_wards[mubi_wards$wrd_nm_x !='Uba',] #removing an unwanted row
 utm33n_proj4 <- "+proj=utm +zone=33 +datum=WGS84 +units=m +no_defs" 
 
 
-
 mubi_wards <- sf::st_transform(mubi_wards,crs = 32633)
 health_f <- sf::st_transform(health_f,crs = 32633)
 adamawa_dem <- terra::project(adamawa_dem,utm33n_proj4)
@@ -153,8 +152,16 @@ matrix_lc <- matrix(breaks_lc,ncol = 3, byrow = TRUE)
 lc_reclassified <- classify(mubi_lc, matrix_lc)
 plot(lc_reclassified)
 
-#Resample unaligned raster foruniform extents and resolution
-Mubi_slope_reclassified <- resample(Mubi_slope_reclassified,rds_ecd_reclassified)
+#Check extent for each layer 
+ext(mubi_pop_reclassified)
+ext(lc_reclassified)
+ext(rds_ecd_reclassified)
+ext(Mubi_slope_reclassified)
+ext(mubi_ecd_relass)
+
+
+#Resample unaligned raster layer for uniform extents and resolution
+lc_reclassified <- resample(lc_reclassified,rds_ecd_reclassified)
 
 
 #Carry out raster calculation with figures representing weights (priority)
